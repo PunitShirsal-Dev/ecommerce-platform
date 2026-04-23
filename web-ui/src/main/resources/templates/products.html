@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Products</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}"/>
+</head>
+<body>
+<header class="top">
+    <h1>Catalog</h1>
+    <nav>
+        <a th:href="@{/}">Home</a>
+        <form th:action="@{/logout}" method="post" style="display:inline">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="link">Sign out</button>
+        </form>
+    </nav>
+</header>
+<main>
+    <p th:if="${error}" class="error" th:text="${error}">Error</p>
+    <table th:if="${products != null && !products.isEmpty()}">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Price</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${products}">
+            <td th:text="${p.id}">id</td>
+            <td th:text="${p.name}">name</td>
+            <td th:text="${p.category}">cat</td>
+            <td th:text="${p.price}">0</td>
+        </tr>
+        </tbody>
+    </table>
+    <p th:if="${products == null || products.isEmpty()}" class="muted">No products returned.</p>
+</main>
+</body>
+</html>

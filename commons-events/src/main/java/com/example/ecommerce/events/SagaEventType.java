@@ -1,0 +1,12 @@
+package com.example.ecommerce.events;
+
+public enum SagaEventType {
+    ORDER_PLACED,
+    INVENTORY_RESERVED,
+    INVENTORY_INSUFFICIENT,
+    PAYMENT_PROCESSED,
+    PAYMENT_FAILED,
+    ORDER_CONFIRMED,
+    ORDER_CANCELLED,
+    INVENTORY_RELEASED
+}

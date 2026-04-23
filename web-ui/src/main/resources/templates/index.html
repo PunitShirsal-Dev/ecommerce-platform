@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>E‑commerce storefront</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}"/>
+</head>
+<body>
+<header class="top">
+    <h1>Storefront</h1>
+    <nav>
+        <a th:href="@{/products}">Sign in &amp; browse catalog</a>
+    </nav>
+</header>
+<main>
+    <p class="lead">Server‑rendered UI with Thymeleaf. Use <strong>Sign in</strong> to open Keycloak, then view products through the API Gateway.</p>
+</main>
+</body>
+</html>

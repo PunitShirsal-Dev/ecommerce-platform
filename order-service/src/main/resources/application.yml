@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: order-service
+  config:
+    import: optional:configserver:http://localhost:8888
+  threads:
+    virtual:
+      enabled: true
+  jpa:
+    open-in-view: false
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
+server:
+  port: 0
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+feign:
+  circuitbreaker:
+    enabled: true
+
+app:
+  kafka:
+    saga-topic: saga-events

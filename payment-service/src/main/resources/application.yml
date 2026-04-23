@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: payment-service
+  config:
+    import: optional:configserver:http://localhost:8888
+  threads:
+    virtual:
+      enabled: true
+  jpa:
+    open-in-view: false
+
+server:
+  port: 0
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
