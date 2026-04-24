@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: ${INVENTORY_DB_URL:jdbc:postgresql://localhost:5432/inventory}
+    username: ${INVENTORY_DB_USER:inventory}
+    password: ${INVENTORY_DB_PASSWORD:inventory}
+  flyway:
+    enabled: true

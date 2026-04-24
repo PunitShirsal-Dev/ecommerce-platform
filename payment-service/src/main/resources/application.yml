@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: payment-service
+  #  datasource:
+  #    url: jdbc:postgresql://${DB_HOST:localhost}:5432/oms_order
+  #    username: ${DB_USERNAME:postgres}
+  #    password: ${DB_PASSWORD:postgres}
+  jpa:
+    open-in-view: false
+  flyway:
+    enabled: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console  # Optional: custom path for the console
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  config:
+    import: optional:configserver:http://localhost:8888
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 0
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

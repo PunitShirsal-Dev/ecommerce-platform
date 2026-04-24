@@ -1,0 +1,22 @@
+target/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+*.log
+.DS_Store
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Local Helm overrides with secrets / real endpoints (never commit)
+**/values*.local.yaml
+**/values*.secrets.yaml
+
+.github/
+.deploy/

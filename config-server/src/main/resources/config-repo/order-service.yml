@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${ORDER_DB_URL:jdbc:postgresql://localhost:5432/orders}
+    username: ${ORDER_DB_USER:orders}
+    password: ${ORDER_DB_PASSWORD:orders}
+  flyway:
+    enabled: true
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 32
+        order_inserts: true
+        order_updates: true

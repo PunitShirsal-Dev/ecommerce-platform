@@ -1,0 +1,18 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      default-filters:
+        - name: Retry
+          args:
+            retries: 2
+            statuses: BAD_GATEWAY,GATEWAY_TIMEOUT
+            methods: GET,POST
+
+app:
+  rate-limit:
+    replenish: 20
+    burst: 40

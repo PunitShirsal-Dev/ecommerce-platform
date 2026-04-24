@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: ${PAYMENT_DB_URL:jdbc:postgresql://localhost:5432/payments}
+    username: ${PAYMENT_DB_USER:payments}
+    password: ${PAYMENT_DB_PASSWORD:payments}
+  flyway:
+    enabled: true
+
+app:
+  stripe:
+    api-key: ${STRIPE_API_KEY:sk_test_placeholder}
