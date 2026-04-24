@@ -1,0 +1,67 @@
+# Shared defaults for all services (override per env via profile-specific files)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  tracing:
+    sampling:
+      probability: ${TRACE_SAMPLE_PROBABILITY:0.1}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:validate}
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      transaction-id-prefix: ${spring.application.name}-tx-
+      properties:
+        enable.idempotence: true
+        acks: all
+        max.in.flight.requests.per.connection: 5
+    consumer:
+      properties:
+        isolation.level: read_committed
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/ecommerce}
+
+app:
+  kafka:
+    saga-topic: saga-events
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka/}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 200ms

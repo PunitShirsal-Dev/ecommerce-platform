@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: web-ui
+  thymeleaf:
+    cache: ${THYMELEAF_CACHE:false}
+  security:
+    oauth2:
+      client:
+        registration:
+          web-ui:
+            provider: keycloak
+            client-id: web-ui
+            client-authentication-method: none
+            authorization-grant-type: authorization_code
+            scope: openid, profile, email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/ecommerce}
+
+server:
+  port: 8092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL:http://localhost:8761/eureka/}
+
+app:
+  gateway-base-url: ${GATEWAY_BASE_URL:http://api-gateway}

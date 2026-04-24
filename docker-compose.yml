@@ -1,0 +1,256 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  postgres-orders:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: orders
+      POSTGRES_DB: orders
+    ports:
+      - "5432:5432"
+
+  postgres-inventory:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: inventory
+      POSTGRES_PASSWORD: inventory
+      POSTGRES_DB: inventory
+    ports:
+      - "5433:5432"
+
+  postgres-payments:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: payments
+      POSTGRES_PASSWORD: payments
+      POSTGRES_DB: payments
+    ports:
+      - "5434:5432"
+
+  postgres-customers:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: customers
+      POSTGRES_PASSWORD: customers
+      POSTGRES_DB: customers
+    ports:
+      - "5435:5432"
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    command: start-dev --import-realm --http-relative-path=/
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./deploy/keycloak/realm-ecommerce.json:/opt/keycloak/data/import/realm-ecommerce.json:ro
+    ports:
+      - "8090:8080"
+
+  eureka-server:
+    build:
+      context: .
+      dockerfile: eureka-server/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8761:8761"
+
+  config-server:
+    build:
+      context: .
+      dockerfile: config-server/Dockerfile
+    depends_on:
+      - eureka-server
+    environment:
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      SPRING_PROFILES_ACTIVE: native
+    ports:
+      - "8888:8888"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    depends_on:
+      - eureka-server
+      - config-server
+      - redis
+      - keycloak
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ecommerce
+    ports:
+      - "8081:8081"
+
+  product-service:
+    build:
+      context: .
+      dockerfile: product-service/Dockerfile
+    depends_on:
+      - eureka-server
+      - config-server
+      - kafka
+      - mongo
+      - elasticsearch
+      - keycloak
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/products
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ecommerce
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    depends_on:
+      - eureka-server
+      - config-server
+      - kafka
+      - postgres-orders
+      - keycloak
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-orders:5432/orders
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ecommerce
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    depends_on:
+      - eureka-server
+      - config-server
+      - kafka
+      - postgres-inventory
+      - keycloak
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-inventory:5432/inventory
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ecommerce
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    depends_on:
+      - eureka-server
+      - config-server
+      - kafka
+      - postgres-payments
+      - keycloak
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-payments:5432/payments
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ecommerce
+
+  customer-service:
+    build:
+      context: .
+      dockerfile: customer-service/Dockerfile
+    depends_on:
+      - eureka-server
+      - config-server
+      - postgres-customers
+      - redis
+      - keycloak
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-customers:5432/customers
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ecommerce
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    depends_on:
+      - eureka-server
+      - config-server
+      - kafka
+      - redis
+      - keycloak
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ecommerce
+
+  web-ui:
+    build:
+      context: .
+      dockerfile: web-ui/Dockerfile
+    depends_on:
+      - eureka-server
+      - config-server
+      - api-gateway
+      - keycloak
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL: http://eureka-server:8761/eureka/
+      KEYCLOAK_ISSUER_URI: http://localhost:8090/realms/ecommerce
+      GATEWAY_BASE_URL: http://api-gateway
+    ports:
+      - "8092:8092"
+
+networks:
+  default:
+    name: ecommerce-net
